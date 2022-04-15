@@ -1,0 +1,19 @@
+name = "fresh"
+type = "webpack"
+
+account_id = "ACCOUNT_ID_HERE"
+workers_dev = true
+route = ""
+zone_id = ""
+compatibility_date = "2022-04-15"
+
+kv_namespaces = [
+    { binding = "SHORTEN", preview_id = "ID_HERE", id = "PREVIEW_ID_HERE" }
+]
+
+[site]
+bucket = "./public"
+entry-point = "index"
+
+[vars]
+ORIGIN_URL = "https://example.com"
