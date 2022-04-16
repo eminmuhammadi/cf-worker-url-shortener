@@ -13,7 +13,6 @@
   <body class="bg-gray-50 w-full">
     <div class="container mx-auto">
       <form class="my-5 px-3 mt-32">
-        
         <!-- Brand -->
         <a href="/?source=brand">
           <svg
@@ -51,7 +50,6 @@
         </a>
         <!-- end Brand -->
 
-
         <!-- Form -->
         <div class="flex">
           <input
@@ -61,8 +59,9 @@
             aria-label="URL address"
           />
           <button
-            class="rounded-lg p-2 ml-2 hover:bg-indigo-700 bg-indigo-800 text-white px-4 py-3 font-bold"
+            class="disabled:opacity-20 rounded-lg p-2 ml-2 hover:bg-indigo-700 bg-indigo-800 text-white px-4 py-3 font-bold"
             type="submit"
+            disabled
           >
             Shorten
           </button>
@@ -85,6 +84,16 @@
       // Request API Call to get the short URL
       const form = document.querySelector("form");
 
+      // Disable button
+      const input = document.querySelector("input");
+      input.addEventListener("input", function () {
+        if (input.value.length > 0) {
+          form.querySelector("button").disabled = false;
+        } else {
+          form.querySelector("button").disabled = true;
+        }
+      });
+
       form.addEventListener("submit", (e) => {
         e.preventDefault();
 
@@ -100,9 +109,13 @@
         })
           .then((res) => res.json())
           .then((data) => {
-            input.value = data.url;
-            input.select();
-            document.execCommand("copy");
+            if (data.success) {
+              input.value = data.url;
+              input.select();
+              document.execCommand("copy");
+            } else {
+                alert(data.message || "Something went wrong...");
+            }
           });
       });
     </script>
