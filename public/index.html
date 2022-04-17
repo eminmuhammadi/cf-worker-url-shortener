@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <base href="https://www.fresh.tk" />
     <title>Fresh - Fastest URL Shortener</title>
 
     <meta charset="utf-8" />
@@ -51,7 +52,7 @@
         <!-- end Brand -->
 
         <!-- Form -->
-        <div class="flex">
+        <div class="flex pt-12">
           <input
             type="url"
             class="shadow-sm hover:shadow-lg w-full rounded-lg"
@@ -67,12 +68,14 @@
           </button>
         </div>
 
-        <div class="absolute inset-x-0 bottom-0 h-16 px-3">
-          <p class="text-sm text-gray-400 text-center">
-            By clicking a Shorten button, you agree to our
-            <a href="/?source=terms_and_condition" class="font-semibold"
-              >Terms and Conditions</a
-            >.
+        <div class="absolute inset-x-0 bottom-0 h-16 px-5">
+          <p class="text-xs text-gray-400 text-center">
+            Self hosted conversion tracking service; Identify your customers
+            adding
+            <a href="/pixel.gif" target="_blank" class="font-bold underline">
+              pixel.gif
+            </a>
+            image to emails or web pages.
           </p>
         </div>
       </form>
@@ -113,8 +116,9 @@
               input.value = data.url;
               input.select();
               document.execCommand("copy");
+              form.querySelector("button").disabled = true;
             } else {
-                alert(data.message || "Something went wrong...");
+              alert(data.message || "Something went wrong...");
             }
           });
       });

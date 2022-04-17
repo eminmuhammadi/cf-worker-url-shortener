@@ -1,6 +1,7 @@
 import { Router } from "itty-router";
 import { customAlphabet } from "nanoid";
 import { getAssetFromKV } from "@cloudflare/kv-asset-handler";
+import COMMON_HEADERS from "./lib/headers";
 
 const router = Router();
 // Generate a nanoid
@@ -17,32 +18,20 @@ const isValidURL = (string) => {
   return res !== null;
 };
 
-// User Footprint
-const uid = async (cf) => {
-  const footprint = {
-    asn: cf.asn,
-    country: cf.country,
-    continent: cf.continent,
-    latitude: cf.latitude,
-    longitude: cf.longitude,
-    timezone: cf.timezone,
-    city: cf.city,
-    region: cf.region,
-    region_code: cf.regionCode,
-    postal_code: cf.postalCode,
-    provider: cf.asOrganization,
-  };
-
-  const string = new TextEncoder().encode(JSON.stringify(footprint));
-  const hashBuffer = await crypto.subtle.digest('SHA-256', string);
-
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-  return hash;
-};
-
 /* =============== Router =============== */
+
+// Pixel image tracking
+router.get("/pixel.gif", async (request) => {
+  const base64 = "R0lGODlhAQABAIAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=="
+  const headers = await COMMON_HEADERS(request, {
+    "content-type": "image/gif",
+  });
+
+  return new Response(Uint8Array.from(atob(base64), c => c.charCodeAt(0)), {
+    status: 200,
+    headers,
+  });
+});
 
 // Generate short url
 router.post("/generate", async (request) => {
@@ -56,54 +45,52 @@ router.post("/generate", async (request) => {
       body.url === "" ||
       !isValidURL(body.url)
     ) {
-      const res = {
-        success: false,
-        message: "Invalid url",
-      };
+      const headers = await COMMON_HEADERS(request, {});
 
-      return new Response(JSON.stringify(res), {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json;charset=UTF-8",
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS, HEAD",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Invalid url",
+        }),
+        {
+          status: 500,
+          headers,
+        }
+      );
     }
 
     await SHORTEN.put(slug, body.url, { expirationTtl: 86400 });
-    const res = {
-      success: true,
-      message: "URL has been shortened",
-      url: `${ORIGIN_URL}/${slug}`,
-    };
 
-    return new Response(JSON.stringify(res), {
-      status: 201,
-      headers: {
-        "Content-Type": "application/json;charset=UTF-8",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS, HEAD",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
+    const headers = await COMMON_HEADERS(request, {
+      "X-FRESH-GENERATED-URL": encodeURIComponent(`${ORIGIN_URL}/${slug}`),
+      "X-FRESH-SHORTEN-URL": encodeURIComponent(body.url),
     });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "URL has been shortened",
+        url: `${ORIGIN_URL}/${slug}`,
+      }),
+      {
+        status: 201,
+        headers,
+      }
+    );
   }
 
-  const res = {
-    success: false,
-    message: "Bad request",
-  };
+  const headers = await COMMON_HEADERS(request, {});
 
-  return new Response(JSON.stringify(res), {
-    status: 400,
-    headers: {
-      "Content-Type": "application/json;charset=UTF-8",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS, HEAD",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
-  });
+  return new Response(
+    JSON.stringify({
+      success: false,
+      message: "Bad request",
+    }),
+    {
+      status: 400,
+      headers,
+    }
+  );
 });
 
 // Redirect to url
@@ -111,33 +98,28 @@ router.get("/:slug", async (request) => {
   let url = await SHORTEN.get(request.params.slug);
 
   if (url === null || url === undefined || url === "" || !isValidURL(url)) {
-    const res = {
-      success: false,
-      message: "URL not found",
-    };
+    const headers = await COMMON_HEADERS(request, {});
 
-    return new Response(JSON.stringify(res), {
-      status: 404,
-      headers: {
-        "Content-Type": "application/json;charset=UTF-8",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS, HEAD",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: "URL not found",
+      }),
+      {
+        status: 404,
+        headers,
+      }
+    );
   }
 
-  let link = new URL(url);
-  const footprint = await uid(request.cf);
-
-  link.searchParams.set("fresh_id", footprint);
+  const headers = await COMMON_HEADERS(request, {
+    Location: url,
+    Referrer: `${ORIGIN_URL}`,
+  });
 
   return new Response(null, {
-    headers: {
-      Location: link,
-      Referrer: `${ORIGIN_URL}`,
-    },
     status: 301,
+    headers,
   });
 });
 

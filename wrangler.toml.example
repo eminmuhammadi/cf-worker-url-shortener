@@ -17,3 +17,4 @@ entry-point = "index"
 
 [vars]
 ORIGIN_URL = "https://example.com"
+PRIVATE_KEY = "5$(Mw1+yZ@,QL^U+Sg-,&_dj(M%WP;-;5I<<a]xUyZRv:gg$:j|%G!!ps.b$7B{"
