@@ -1,8 +1,12 @@
 import { parse } from "cookie";
 
+// Cookie name
 const COOKIE_NAME = "__fresh_id";
-const COOKIE_EXP  = new Date(2147483647 * 1000).toUTCString();
 
+// Today + 2 years
+const COOKIE_EXP = (60 * 60 * 24 * 7 * 4) * 12 * 2; // month * 12 * 2
+
+// Identify user
 const id = (request) => {
   return {
     user_agent: request.headers.get("user-agent"),
@@ -13,6 +17,7 @@ const id = (request) => {
   };
 };
 
+// Generate fingerprint
 const fingerprint = async (request) => {
   const cookie = parse(request.headers.get("Cookie") || "");
   const fresh_id = cookie[COOKIE_NAME];
@@ -33,6 +38,7 @@ const fingerprint = async (request) => {
   return hash;
 };
 
+// Verify fingerprint
 const verify = async (request, fresh_id) => {
   const _id = id(request);
 
@@ -49,8 +55,4 @@ const verify = async (request, fresh_id) => {
   return false;
 };
 
-export {
-  fingerprint,
-  COOKIE_NAME,
-  COOKIE_EXP,
-};
+export { fingerprint, COOKIE_NAME, COOKIE_EXP };

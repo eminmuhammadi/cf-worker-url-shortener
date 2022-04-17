@@ -38,6 +38,7 @@ router.post("/generate", async (request) => {
   const slug = shortId();
   const body = await request.json();
 
+  // Check url whether valid or not
   if ("url" in body) {
     if (
       body.url === null ||
@@ -59,6 +60,7 @@ router.post("/generate", async (request) => {
       );
     }
 
+    // Add url to database
     await SHORTEN.put(slug, body.url, { expirationTtl: 86400 });
 
     const headers = await COMMON_HEADERS(request, {
@@ -79,6 +81,7 @@ router.post("/generate", async (request) => {
     );
   }
 
+  // If url is not valid
   const headers = await COMMON_HEADERS(request, {});
 
   return new Response(
@@ -97,6 +100,7 @@ router.post("/generate", async (request) => {
 router.get("/:slug", async (request) => {
   let url = await SHORTEN.get(request.params.slug);
 
+  // If url is not found
   if (url === null || url === undefined || url === "" || !isValidURL(url)) {
     const headers = await COMMON_HEADERS(request, {});
 
